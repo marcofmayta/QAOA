@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Implementación | QAOA en práctica · Marco Mayta</title>
+<meta name="description" content="Guía de implementación de QAOA: optimización de parámetros, compilación, restricciones y bibliotecas en Python.">
+<meta property="og:title" content="Implementación de QAOA">
+<meta property="og:description" content="Optimización, compilación, restricciones y bibliotecas.">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="./assets/css/style.css">
+<link rel="stylesheet" href="./assets/css/laboratorio.css">
+<link rel="icon" href="./assets/img/favicon.svg" type="image/svg+xml">
+<meta name="author" content="Marco Fidel Mayta Quispe">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://marcofmayta.github.io/QAOA/implementacion.html">
+<meta property="og:url" content="https://marcofmayta.github.io/QAOA/implementacion.html">
+<meta property="og:image" content="https://marcofmayta.github.io/QAOA/assets/img/marco-mayta.jpg">
+<meta property="og:image:alt" content="Marco Fidel Mayta Quispe, autor de QAOA en practica">
+</head>
+<body>
+<div class="reading-progress" aria-hidden="true"></div>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="./index.html" class="logo">
+      <span class="logo-mark">QAOA</span>
+      <span class="logo-sub">Marco Mayta</span>
+    </a>
+    <button class="menu-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+    <nav class="main-nav" aria-label="Navegación principal">
+      <a href="./index.html">Inicio</a>
+      <a href="./fundamentos.html">Fundamentos</a>
+      <a href="./implementacion.html" class="active" aria-current="page">Implementación</a>
+      <a href="./ejercicios.html">Ejercicios</a>
+      <a href="./investigacion.html">Investigación</a>
+      <a href="./recursos.html">Recursos</a>
+      <a href="./sobre-mi.html">Sobre mí</a>
+    </nav>
+    <button class="motion-toggle" aria-pressed="false">Pausar animación</button>
+    <button class="theme-toggle" aria-label="Cambiar tema">🌙</button>
+  </div>
+</header>
+
+<div class="layout">
+  <main class="content" id="contenido">
+    <article>
+
+      <h1>Guía de implementación</h1>
+      <p class="lede">
+        Cómo llevar QAOA de la teoría al circuito compilado y al hardware real,
+        con ejemplos de código y criterios para elegir parámetros y compuertas.
+      </p>
+
+      <section>
+        <h2 id="optimizacion">1. Optimización de parámetros</h2>
+        <p>
+          El bucle clásico es, en muchas aplicaciones, el cuello de botella
+          real: cada evaluación de \( E(\vec\gamma,\vec\beta) \) requiere
+          ejecutar el circuito muchas veces. Para un observable de varianza finita, estimar su media
+          con error estadístico \( \epsilon \) requiere un número de disparos
+          del orden de \(\operatorname{Var}(C)/\epsilon^2\) para un error estándar \(\epsilon\). La varianza, la confianza exigida y el protocolo de medición importan.
+        </p>
+
+        <h3>Métodos basados en gradiente</h3>
+        <ul>
+          <li><strong>Regla de desplazamiento de parámetros:</strong> para una rotación \( e^{-i\theta P/2} \), con \( P^2=I \), la derivada del valor esperado ideal, respecto del ángulo de esa puerta, se obtiene con dos evaluaciones:
+            \( \partial_\theta E = \tfrac{1}{2}[E(\theta+\tfrac{\pi}{2}) - E(\theta-\tfrac{\pi}{2})] \). Con mediciones finitas se obtiene un estimador estadístico. Si un parámetro aparece en varias compuertas, se suman sus contribuciones con la regla de la cadena; desplazar toda la capa no suele bastar.</li>
+          <li><strong>Diferencias finitas:</strong> aproximación simple pero propensa al ruido estadístico de disparos.</li>
+          <li><strong>Gradiente por diferenciación adjunta:</strong> eficiente en simuladores, pero limitado por memoria en \( n \) grande.</li>
+        </ul>
+
+        <h3>Alternativas para la optimización</h3>
+        <ul>
+          <li><strong>COBYLA:</strong> método sin derivadas usado en problemas con pocos parámetros.</li>
+          <li><strong>Nelder-Mead:</strong> simple pero escala mal con \( p \).</li>
+          <li><strong>SPSA:</strong> aproximación estocástica del gradiente, útil cuando los disparos son limitados.</li>
+          <li><strong>CMA-ES y variantes:</strong> métodos poblacionales que pueden explorar paisajes multimodales; el costo depende del presupuesto y la instancia.</li>
+        </ul>
+
+        <h3>Optimización basada en CVaR</h3>
+        <p>
+          En lugar de minimizar \( \mathbb{E}[C] \), se minimiza el valor en
+          riesgo condicional sobre la fracción \( \alpha \) de mejores
+          muestras:
+        </p>
+        $$ \mathrm{CVaR}_\alpha = \max_{t} \left\{ t - \frac{1}{\alpha} \mathbb{E}\bigl[(t - C)^+\bigr] \right\} $$
+        <p>
+          Para \(0<\alpha\leq1\), esta expresión corresponde a la media de la
+          cola inferior de costos (repartiendo la masa de probabilidad en el umbral si hay empates), con \(u^+=\max(u,0)\). Su minimización
+          prioriza las mejores muestras, sin garantizar una mejora universal.
+          <a href="https://arxiv.org/abs/1907.04769">Barkoutsos et al. (2020)</a>.
+        </p>
+
+        <p>Con muestras equiprobables ordenadas \(c_{(1)}\leq\cdots\leq c_{(N)}\),
+          usa \(m=\lfloor\alpha N\rfloor\) y \(r=\alpha N-m\):</p>
+        $$ \widehat{\mathrm{CVaR}}_\alpha=\frac{\sum_{k=1}^{m}c_{(k)}+r c_{(m+1)}}{\alpha N} $$
+        <p>Si \(r=0\), el término fraccionario se omite, incluso cuando \(m=N\).
+          No se debe redondear la cantidad de muestras sin especificar una convención.</p>
+        <h3>Estrategias de inicialización y transferencia</h3>
+        <ul>
+          <li>Para MaxCut no ponderado, inicialización aleatoria uniforme en \( [0,2\pi)\times[0,\pi) \).</li>
+          <li>Interpolación de los perfiles de ángulos desde \( p-1 \) hacia \( p \). Añadir una capa con ángulos cero conserva el estado previo, pero no equivale a interpolar.</li>
+          <li>Transferencia entre instancias: reutilizar \( (\vec\gamma^*,\vec\beta^*) \) de problemas similares.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 id="compilacion">2. Compilación de circuitos</h2>
+        <p>
+          El problema de MaxCut definido en un grafo \( G \) requiere
+          interacciones ZZ entre pares de qubits. Si una arista del problema no está disponible físicamente,
+          el compilador necesita enrutamiento, por ejemplo mediante SWAPs, lo que
+          puede aumentar el número de compuertas de dos qubits y la profundidad.
+        </p>
+
+        <h3>Coste de SWAPs</h3>
+        <p>
+          En una base de CNOTs, un SWAP puede descomponerse en 3 CNOTs. Para ejecutar un ZZ entre dos
+          qubits a distancia \( d \) en la topología del hardware, se necesitan
+          aproximadamente \( 3(d-1) \) CNOTs de enrutamiento más 2 CNOTs para el
+          propio ZZ, si no se restaura la disposición inicial. El costo real depende del compilador y del conjunto de compuertas nativas.
+        </p>
+
+        <h3>Compilación en una cadena lineal</h3>
+        <p>Si el grafo de interacción no es un subgrafo de la conectividad física,
+          reordenar los qubits no hace locales todas sus aristas. Una red de SWAPs
+          permite ejecutar las interacciones manteniendo el Hamiltoniano original.
+          Omitir aristas cambia el problema que se optimiza.</p>
+
+        <h3>Profundidad efectiva</h3>
+        <p>
+          Si todas las capas tienen costos de compilación similares y se omiten
+          la preparación y la medición, la profundidad se aproxima como:
+        </p>
+        $$ D \approx p \cdot \bigl( D_C^{\text{enrutado}} + D_B \bigr) $$
+        <p>
+          con \( D_C^{\text{enrutado}} \) la profundidad del bloque de costo
+          incluyendo enrutamiento, y \( D_B \) la profundidad del bloque de mezcla
+          (una capa de rotaciones \( R_X \) en paralelo).
+        </p>
+      </section>
+
+      <section>
+        <h2 id="restricciones">3. Manejo de restricciones</h2>
+
+        <h3>Penalización y mezcladores adaptados</h3>
+        <p>
+          Los métodos de penalización modifican el Hamiltoniano de costo
+          para una igualdad \(g(x)=0\), añadiendo \(\lambda g(x)^2\).
+          El mezclador X puede recorrer estados no factibles. La probabilidad de
+          obtener soluciones válidas depende de los parámetros y de la penalización;
+          no necesariamente disminuye en todos los casos. Una desigualdad requiere
+          otra codificación, por ejemplo una variable de holgura.
+          Los <em>mezcladores que preservan la factibilidad</em> restringen la evolución al
+          subespacio factible desde el inicio.
+        </p>
+
+        <h3>Estado inicial factible</h3>
+        <p>Un mezclador que conserva las restricciones necesita un estado inicial
+          factible. También debe conectar las soluciones que interesa explorar;
+          conservar la factibilidad por sí solo no asegura esa conectividad.</p>
+
+        <h3>Variables de holgura</h3>
+        <p>
+          Una desigualdad puede convertirse en igualdad mediante una variable
+          de holgura no negativa, codificada en binario. Las igualdades no
+          requieren holgura por sí mismas. Si la holgura toma valores enteros entre cero y una cota, el número de qubits adicionales es
+          \( \lceil \log_2(\text{cota}+1) \rceil \) por restricción.
+        </p>
+      </section>
+
+      <section>
+        <h2 id="frameworks">4. Cómo programar QAOA</h2>
+        <p>El procedimiento consiste en codificar el objetivo, preparar el estado,
+          aplicar las capas de costo y mezcla, y ajustar los ángulos con un optimizador
+          clásico. Este ejemplo busca soluciones de MaxCut en un ciclo de cuatro vértices.</p>
+        <h3>Python: ejemplo completo con Qiskit</h3>
+        <pre><code class="language-bash">python -m pip install qiskit numpy scipy</code></pre>
+        <p>Se usa simulación ideal del vector de estado para optimizar y se toman
+          1024 muestras al final. Con \(H_C=\sum (I-Z_iZ_j)/2\), la puerta de
+          costo es <code>rzz(-gamma)</code> y la mezcla es <code>rx(2*beta)</code>.
+          El optimizador minimiza el negativo del corte esperado.</p>
+        <pre><code class="language-python">import numpy as np
+from scipy.optimize import minimize
+from qiskit import QuantumCircuit
+from qiskit.quantum_info import Statevector
+
+aristas = [(0, 1), (1, 2), (2, 3), (3, 0)]
+costos = np.array([sum(((x &gt;&gt; i) &amp; 1) != ((x &gt;&gt; j) &amp; 1)
+                       for i, j in aristas) for x in range(16)])
+
+def circuito(parametros):
+    gamma, beta = parametros  
+    qc = QuantumCircuit(4)
+    qc.h(range(4))
+    for i, j in aristas:
+        qc.rzz(-gamma, i, j)  
+    qc.rx(2 * beta, range(4))
+    return qc
+
+def objetivo(parametros):
+    probabilidades = Statevector.from_instruction(circuito(parametros)).probabilities()
+    return -float(probabilidades @ costos)  
+
+if __name__ == "__main__":
+    resultado = minimize(objetivo, [0.5, 0.3], method="COBYLA",
+                         options={"maxiter": 200})
+    print("Corte esperado:", -resultado.fun)
+    estado = Statevector.from_instruction(circuito(resultado.x))
+    estado.seed(42)
+    muestras = estado.sample_counts(1024)
+    mejor = max(muestras, key=lambda bits: costos[int(bits, 2)])
+    print("Mejor partición muestreada:", mejor, "corte:", costos[int(mejor, 2)])
+</code></pre>
+        <p><a href="./ejemplos/qaoa_python.py" download>Descargar el ejemplo Python</a> ·
+          <a href="https://eu-de.quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.circuit.library.RZZGate">Definición de RZZ en Qiskit</a>.</p>
+        <p>Para este ejemplo, una capa puede alcanzar un corte esperado de 3;
+          el corte óptimo clásico es 4. La convergencia depende de la inicialización.
+          La simulación de vectores de estado necesita memoria exponencial en el
+          número de qubits y no demuestra ventaja cuántica.</p>
+        <h3>Otros lenguajes y bibliotecas</h3>
+        <div class="table-scroll"><table class="compare-table">
+          <thead><tr><th>Lenguaje</th><th>Herramienta</th><th>Cómo implementar QAOA</th></tr></thead>
+          <tbody>
+            <tr><td>Python</td><td><a href="https://pennylane.ai/demos/tutorial_qaoa_maxcut">PennyLane</a></td><td>Construir el Hamiltoniano, aplicar capas con <code>qml.qaoa</code> y optimizar su valor esperado. Comprobar la convención de signo del costo.</td></tr>
+            <tr><td>Julia</td><td><a href="https://yaoquantum.org/">Yao.jl</a></td><td>Preparar un registro, aplicar Hadamard y alternar las rotaciones ZZ y X; evaluar el corte y ajustar los ángulos desde Julia.</td></tr>
+            <tr><td>Q#</td><td><a href="https://learn.microsoft.com/en-us/azure/quantum/user-guide">QDK de Microsoft</a></td><td>Escribir las operaciones de preparación, costo, mezcla y medición en Q#; organizar las evaluaciones y la optimización desde un programa anfitrión.</td></tr>
+            <tr><td>JavaScript</td><td>Simulador de este sitio</td><td>Usar arreglos de amplitudes complejas, aplicar las fases de costo y las rotaciones X, y buscar ángulos en una malla. El visualizador muestra este procedimiento para cuatro qubits.</td></tr>
+          </tbody>
+        </table></div>
+        <p>En cualquier lenguaje, verificar primero el signo del objetivo, el factor
+          de dos en las rotaciones y el orden de los bits. Comparar instancias pequeñas
+          con una solución clásica exacta antes de ejecutar en hardware.</p>
+      </section>
+
+      <section>
+        <h2 id="calculadora">5. Calculadora de profundidad de circuito</h2>
+        <p>
+          Modelo simplificado del número de compuertas de dos qubits y de la
+          profundidad para MaxCut sobre un grafo completo \( K_n \) en distintas
+          topologías de hardware. Los factores de enrutamiento son estimaciones
+          geométricas, no mediciones de un circuito compilado.
+        </p>
+
+        <div class="interactive" id="calc-prof">
+          <div class="controls-grid">
+            <label for="calc-n">Qubits (n):</label>
+            <input type="number" id="calc-n" min="2" max="200" value="8">
+
+            <label for="calc-topo">Topología:</label>
+            <select id="calc-topo">
+              <option value="all">conectividad completa</option>
+              <option value="linear">lineal</option>
+              <option value="grid">cuadrícula 2D</option>
+            </select>
+
+            <label for="calc-p">Capas (p):</label>
+            <input type="number" id="calc-p" min="1" max="20" value="1">
+
+            <button id="calc-run">Calcular</button>
+          </div>
+          <div id="calc-out" class="result-box" aria-live="polite"></div>
+          <p class="muted small">
+            Se estiman \( p|E|(3\bar d-1) \) CNOTs, más \( pn \) rotaciones X.
+            La profundidad incluye las rotaciones Z y omite preparación y medición; la estimación ignora conflictos
+            de rutas y no sustituye la compilación para un dispositivo concreto.
+          </p>
+        </div>
+      </section>
+
+<section><h2 id="mas-ejemplos">6. Un problema, cinco implementaciones más</h2><p>Todos los ejemplos usan el ciclo 0–1–2–3–0 y maximizan el corte esperado. Son simulaciones ideales. Los ejemplos Python usan COBYLA; JavaScript y Julia buscan en una malla, por lo que sus ángulos y precisión pueden diferir.</p><details class="code-example"><summary>PennyLane · Python</summary><p>Evaluación exacta de las cuatro correlaciones ZZ. Admite pares de parámetros para varias capas.</p>
+<pre><code class="language-bash">python -m pip install pennylane scipy numpy</code></pre>
+<pre><code class="language-python">import numpy as np
+import pennylane as qml
+from scipy.optimize import minimize
+
+ARISTAS = [(0, 1), (1, 2), (2, 3), (3, 0)]
+dispositivo = qml.device("default.qubit", wires=4, shots=None)
+
+@qml.qnode(dispositivo)
+def correlaciones(parametros):
+    for i in range(4):
+        qml.Hadamard(wires=i)
+    for gamma, beta in np.asarray(parametros).reshape(-1, 2):
+        for i, j in ARISTAS:
+            qml.IsingZZ(-gamma, wires=[i, j])
+        for i in range(4):
+            qml.RX(2 * beta, wires=i)
+    return tuple(qml.expval(qml.PauliZ(i) @ qml.PauliZ(j))
+                 for i, j in ARISTAS)
+
+def corte(parametros):
+    return float(sum((1 - zz) / 2 for zz in correlaciones(parametros)))
+
+if __name__ == "__main__":
+    resultado = minimize(lambda x: -corte(x), [0.5, 0.3],
+                         method="COBYLA", options={"maxiter": 200})
+    print("Corte esperado:", corte(resultado.x))
+</code></pre>
+<div class="code-toolbar"><a href="./ejemplos/qaoa_pennylane.py" download>Descargar archivo</a><a href="https://docs.pennylane.ai/en/stable/code/api/pennylane.IsingZZ.html">Documentación</a><button class="copy-code">Copiar código</button><span class="code-status" aria-live="polite"></span></div></details><details class="code-example"><summary>Cirq · Python</summary><p>La rotación ZZ se descompone como CNOT–RZ(−γ)–CNOT. Se evalúan observables para evitar confusiones de orden de bits.</p>
+<pre><code class="language-bash">python -m pip install cirq-core scipy numpy</code></pre>
+<pre><code class="language-python">import numpy as np
+import cirq
+from scipy.optimize import minimize
+
+ARISTAS = [(0, 1), (1, 2), (2, 3), (3, 0)]
+qubits = cirq.LineQubit.range(4)
+simulador = cirq.Simulator(dtype=np.complex128)
+
+def circuito(parametros):
+    qc = cirq.Circuit(cirq.H.on_each(*qubits))
+    for gamma, beta in np.asarray(parametros).reshape(-1, 2):
+        for i, j in ARISTAS:
+            qc.append(cirq.CNOT(qubits[i], qubits[j]))
+            qc.append(cirq.rz(-gamma)(qubits[j]))
+            qc.append(cirq.CNOT(qubits[i], qubits[j]))
+        qc.append(cirq.rx(2 * beta).on_each(*qubits))
+    return qc
+
+def corte(parametros):
+    observables = [cirq.Z(qubits[i]) * cirq.Z(qubits[j]) for i, j in ARISTAS]
+    valores = simulador.simulate_expectation_values(
+        circuito(parametros), observables, qubit_order=qubits)
+    return float(sum((1 - zz.real) / 2 for zz in valores))
+
+if __name__ == "__main__":
+    resultado = minimize(lambda x: -corte(x), [0.5, 0.3],
+                         method="COBYLA", options={"maxiter": 200})
+    print("Corte esperado:", corte(resultado.x))
+</code></pre>
+<div class="code-toolbar"><a href="./ejemplos/qaoa_cirq.py" download>Descargar archivo</a><a href="https://quantumai.google/cirq">Documentación</a><button class="copy-code">Copiar código</button><span class="code-status" aria-live="polite"></span></div></details><details class="code-example"><summary>NumPy · Python</summary><p>Simulación explícita de amplitudes. Incluye la fase de costo completa, sin omitir su constante.</p>
+<pre><code class="language-bash">python -m pip install numpy scipy</code></pre>
+<pre><code class="language-python">import numpy as np
+from scipy.optimize import minimize
+
+ARISTAS = [(0, 1), (1, 2), (2, 3), (3, 0)]
+COSTOS = np.array([sum(((x &gt;&gt; i) &amp; 1) != ((x &gt;&gt; j) &amp; 1)
+                      for i, j in ARISTAS) for x in range(16)])
+
+def estado(parametros):
+    psi = np.ones(16, dtype=complex) / 4
+    for gamma, beta in np.asarray(parametros).reshape(-1, 2):
+        psi *= np.exp(-1j * gamma * COSTOS)
+        c, s = np.cos(beta), np.sin(beta)
+        for q in range(4):
+            for x in range(16):
+                if x &amp; (1 &lt;&lt; q):
+                    continue
+                y = x | (1 &lt;&lt; q)
+                a, b = psi[x], psi[y]
+                psi[x], psi[y] = c * a - 1j * s * b, c * b - 1j * s * a
+    return psi
+
+def corte(parametros):
+    return float(np.abs(estado(parametros)) ** 2 @ COSTOS)
+
+if __name__ == "__main__":
+    resultado = minimize(lambda x: -corte(x), [0.5, 0.3],
+                         method="COBYLA", options={"maxiter": 200})
+    print("Corte esperado:", corte(resultado.x))
+</code></pre>
+<div class="code-toolbar"><a href="./ejemplos/qaoa_numpy.py" download>Descargar archivo</a><a href="https://numpy.org/doc/stable/">Documentación</a><button class="copy-code">Copiar código</button><span class="code-status" aria-live="polite"></span></div></details><details class="code-example"><summary>JavaScript · sin bibliotecas</summary><p>Búsqueda en una malla de 80 × 80 puntos para una capa. Puede ejecutarse aquí en el navegador.</p>
+<pre><code class="language-bash">node -e "const q = require('./ejemplos/qaoa_javascript.js'); console.log(q.buscar())"</code></pre>
+<pre><code class="language-javascript">
+(function (global) {
+  "use strict";
+  const aristas = [[0, 1], [1, 2], [2, 3], [3, 0]];
+  const costos = Array.from({length: 16}, (_, x) =&gt;
+    aristas.reduce((c, [i, j]) =&gt; c + (((x &gt;&gt; i) &amp; 1) !== ((x &gt;&gt; j) &amp; 1)), 0));
+  function corte(gamma, beta) {
+    const re = new Float64Array(16), im = new Float64Array(16);
+    for (let x = 0; x &lt; 16; x++) {
+      re[x] = Math.cos(gamma * costos[x]) / 4;
+      im[x] = -Math.sin(gamma * costos[x]) / 4;
+    }
+    const c = Math.cos(beta), s = Math.sin(beta);
+    for (let q = 0; q &lt; 4; q++) for (let x = 0; x &lt; 16; x++) {
+      if (x &amp; (1 &lt;&lt; q)) continue;
+      const y = x | (1 &lt;&lt; q), ar = re[x], ai = im[x], br = re[y], bi = im[y];
+      re[x] = c * ar + s * bi; im[x] = c * ai - s * br;
+      re[y] = c * br + s * ai; im[y] = c * bi - s * ar;
+    }
+    return costos.reduce((total, costo, x) =&gt; total + costo * (re[x] ** 2 + im[x] ** 2), 0);
+  }
+  function buscar(pasos = 80) {
+    if (!Number.isInteger(pasos) || pasos &lt; 2 || pasos &gt; 500) throw new RangeError("Usa entre 2 y 500 pasos");
+    let mejor = {valor: -Infinity, gamma: 0, beta: 0};
+    for (let i = 0; i &lt; pasos; i++) for (let j = 0; j &lt; pasos; j++) {
+      const gamma = 2 * Math.PI * i / pasos, beta = Math.PI * j / pasos;
+      const valor = corte(gamma, beta);
+      if (valor &gt; mejor.valor) mejor = {valor, gamma, beta};
+    }
+    return mejor;
+  }
+  global.QAOAEjemplo = {corte, buscar};
+  if (typeof module !== "undefined") module.exports = global.QAOAEjemplo;
+})(globalThis);
+</code></pre>
+<div class="code-toolbar"><a href="./ejemplos/qaoa_javascript.js" download>Descargar archivo</a><a href="https://developer.mozilla.org/es/docs/Web/JavaScript">Documentación</a><button class="copy-code">Copiar código</button><span class="code-status" aria-live="polite"></span></div></details><details class="code-example"><summary>Julia · sin paquetes externos</summary><p>Mismo simulador y búsqueda discreta que en JavaScript. Requiere Julia; no necesita Yao ni instalación de paquetes.</p>
+<pre><code class="language-bash">julia ejemplos/qaoa_julia.jl</code></pre>
+<pre><code class="language-julia">
+const ARISTAS = [(0, 1), (1, 2), (2, 3), (3, 0)]
+const COSTOS = [sum(((x &gt;&gt; i) &amp; 1) != ((x &gt;&gt; j) &amp; 1)
+                    for (i, j) in ARISTAS) for x in 0:15]
+
+function corte(gamma, beta)
+    psi = ComplexF64[exp(-im * gamma * costo) / 4 for costo in COSTOS]
+    c, s = cos(beta), sin(beta)
+    for q in 0:3, x in 0:15
+        (x &amp; (1 &lt;&lt; q)) != 0 &amp;&amp; continue
+        y = x | (1 &lt;&lt; q)
+        a, b = psi[x + 1], psi[y + 1]
+        psi[x + 1] = c * a - im * s * b
+        psi[y + 1] = c * b - im * s * a
+    end
+    return sum(abs2.(psi) .* COSTOS)
+end
+
+function buscar(pasos=80)
+    mejor = (valor=-Inf, gamma=0.0, beta=0.0)
+    for i in 0:pasos-1, j in 0:pasos-1
+        gamma, beta = 2pi * i / pasos, pi * j / pasos
+        valor = corte(gamma, beta)
+        if valor &gt; mejor.valor
+            mejor = (valor=valor, gamma=gamma, beta=beta)
+        end
+    end
+    return mejor
+end
+
+if abspath(PROGRAM_FILE) == @__FILE__
+    println(buscar())
+end
+</code></pre>
+<div class="code-toolbar"><a href="./ejemplos/qaoa_julia.jl" download>Descargar archivo</a><a href="https://docs.julialang.org/en/v1/">Documentación</a><button class="copy-code">Copiar código</button><span class="code-status" aria-live="polite"></span></div></details><button class="run-example">Ejecutar el ejemplo JavaScript</button><p id="js-result" class="result-box" aria-live="polite">La malla se calcula localmente en tu navegador.</p>
+<p class="small muted">Las implementaciones de PennyLane, Cirq y NumPy se contrastaron numéricamente con Qiskit en varios ángulos y con una y dos capas. El ejemplo de Julia todavía no cuenta con validación por ejecución.</p>
+<p><a href="./ejercicios.html#programacion">Practica: compara bibliotecas y aumenta la profundidad →</a></p></section>
+    </article>
+  </main>
+  <aside class="toc" aria-label="Tabla de contenidos"></aside>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p>QAOA Referencia técnica · Implementación</p>
+      <p class="muted">Marco Mayta · QAOA · <a href="https://github.com/Maqui2404" rel="noopener noreferrer">GitHub</a> <a href="https://www.linkedin.com/in/marco-mayta-835781170/" rel="noopener noreferrer">LinkedIn</a> </p>
+  </div>
+</footer>
+
+<button class="back-to-top" aria-label="Volver arriba">↑</button>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js" crossorigin="anonymous"></script>
+<script src="./assets/js/katex-init.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-julia.min.js"></script>
+<script src="./assets/js/main.js"></script>
+<script src="./assets/js/interactivos.js"></script>
+<script src="./ejemplos/qaoa_javascript.js"></script>
+<script src="./assets/js/laboratorio.js"></script>
+</body>
+</html>

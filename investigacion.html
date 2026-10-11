@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investigación | QAOA en práctica · Marco Mayta</title>
+<meta name="description" content="Estado del arte en QAOA: diseño de ansatz, ventaja cuántica, evaluaciones comparativas, ruido y mitigación.">
+<meta property="og:title" content="Investigación en QAOA">
+<meta property="og:description" content="Diseño de ansatz, evaluaciones comparativas, ruido y mitigación.">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="./assets/css/style.css">
+<link rel="stylesheet" href="./assets/css/laboratorio.css">
+<link rel="icon" href="./assets/img/favicon.svg" type="image/svg+xml">
+<meta name="author" content="Marco Fidel Mayta Quispe">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://marcofmayta.github.io/QAOA/investigacion.html">
+<meta property="og:url" content="https://marcofmayta.github.io/QAOA/investigacion.html">
+<meta property="og:image" content="https://marcofmayta.github.io/QAOA/assets/img/marco-mayta.jpg">
+<meta property="og:image:alt" content="Marco Fidel Mayta Quispe, autor de QAOA en practica">
+</head>
+<body>
+<div class="reading-progress" aria-hidden="true"></div>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="./index.html" class="logo">
+      <span class="logo-mark">QAOA</span>
+      <span class="logo-sub">Marco Mayta</span>
+    </a>
+    <button class="menu-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+    <nav class="main-nav" aria-label="Navegación principal">
+      <a href="./index.html">Inicio</a>
+      <a href="./fundamentos.html">Fundamentos</a>
+      <a href="./implementacion.html">Implementación</a>
+      <a href="./ejercicios.html">Ejercicios</a>
+      <a href="./investigacion.html" class="active" aria-current="page">Investigación</a>
+      <a href="./recursos.html">Recursos</a>
+      <a href="./sobre-mi.html">Sobre mí</a>
+    </nav>
+    <button class="motion-toggle" aria-pressed="false">Pausar animación</button>
+    <button class="theme-toggle" aria-label="Cambiar tema">🌙</button>
+  </div>
+</header>
+
+<div class="layout">
+  <main class="content" id="contenido">
+    <article>
+
+      <h1>Investigación</h1>
+      <p class="lede">
+        Líneas de investigación sobre el diseño del circuito, la comparación
+        con métodos clásicos y el impacto del ruido.
+      </p>
+
+      <section>
+        <h2 id="ansatz-design">1. Diseño de ansatz y expresividad</h2>
+
+        <h3>QAOA multiobjetivo</h3>
+        <p>
+          Cuando el problema tiene varios objetivos en conflicto (p. ej. riesgo
+          frente al retorno en cartera), QAOA puede adaptarse mediante:
+        </p>
+        <ul>
+          <li><strong>Suma ponderada:</strong> \( H = \sum_k \lambda_k H_k \). Simple pero requiere barrido de pesos.</li>
+          <li><strong>Tchebycheff:</strong> escalarización mediante un máximo ponderado de distancias a un punto de referencia. Puede explorar regiones no convexas, pero su codificación no tiene por qué ser un QUBO de dos cuerpos.</li>
+          <li><strong>Evaluación del hipervolumen:</strong> comparar conjuntos de soluciones respecto de un punto de referencia. No es, en general, el valor esperado de un único Hamiltoniano fijo.</li>
+        </ul>
+        <p>
+          Al variar los pesos se debe volver a evaluar el circuito y el objetivo; transferir ángulos no garantiza conservar la calidad.
+        </p>
+
+        <h3>Ansatz adaptativos</h3>
+        <p>
+          En QAOA estándar se fijan los operadores de costo y mezcla; los
+          ansatz adaptativos eligen las compuertas de cada capa según la
+          estructura del problema o mediante criterios de crecimiento
+          (<a href="https://arxiv.org/abs/2005.10258">ADAPT-QAOA</a>, selección mediante gradientes).
+        </p>
+
+        <h3>Qudits y generalizaciones</h3>
+        <p>
+          La extensión a qudits (\( d \)-niveles) permite codificar variables
+          categóricas sin binarización, reduciendo el número de sistemas físicos necesarios
+          pero aumentando la complejidad de las compuertas.
+        </p>
+      </section>
+
+      <section>
+        <h2 id="ventaja">2. Ventaja cuántica y evaluaciones comparativas</h2>
+
+        <h3>Problemas de optimización</h3>
+        <p>MaxCut, selección de carteras y rutas de vehículos sirven como problemas
+          de estudio. Una codificación QUBO y una prueba a pequeña escala no bastan
+          para establecer utilidad industrial ni aceleración frente a métodos clásicos.</p>
+
+        <h3>Comparaciones justas con heurísticas clásicas</h3>
+        <p>
+          La literatura reciente enfatiza que muchas comparaciones previas
+          adolecen de sesgos metodológicos. Recomendaciones:
+        </p>
+        <ul>
+          <li>Comparar calidad frente al tiempo total, incluyendo optimización, disparos, compilación y comunicación; una llamada cuántica no equivale a una iteración clásica.</li>
+          <li>Reportar distribuciones completas, no solo el mejor resultado.</li>
+          <li>Usar familias de instancias estándar (p. ej. grafos Erdős-Rényi, 3-regulares).</li>
+          <li>Explicitar el régimen de ruido y la mitigación aplicada.</li>
+        </ul>
+
+        <h3>Qué debe informar una comparación</h3>
+        <div class="table-scroll"><table class="compare-table">
+          <thead><tr><th>Aspecto</th><th>Información necesaria</th></tr></thead>
+          <tbody>
+            <tr><td>Instancias</td><td>Grafo, pesos, restricciones y semillas reproducibles.</td></tr>
+            <tr><td>Calidad</td><td>Mejor valor, media, dispersión y referencia óptima o cota conocida.</td></tr>
+            <tr><td>Recursos</td><td>Tiempo total, evaluaciones, disparos y profundidad compilada.</td></tr>
+            <tr><td>Comparación clásica</td><td>Solucionador, versión, configuración y presupuesto de tiempo.</td></tr>
+          </tbody>
+        </table></div>
+        <p>La garantía teórica de 0,6924 para MaxCut en grafos 3-regulares con
+          una capa no es una medición para un grafo de diez nodos.
+          <a href="https://arxiv.org/abs/1411.4028">Farhi, Goldstone y Gutmann (2014)</a>.</p>
+      </section>
+
+      <section>
+        <h2 id="ruido">3. Ruido y mitigación de errores</h2>
+
+        <h3>Impacto del ruido</h3>
+        <p>
+          En hardware NISQ, la profundidad máxima útil de un circuito QAOA está
+          limitada por los tiempos de relajación \( T_1 \) y desfasamiento \( T_2 \) y por las tasas de error
+          de las compuertas de dos qubits. La profundidad útil depende del dispositivo, la conectividad,
+          el circuito compilado y el presupuesto de medición; no hay un valor
+          universal de \( p \).
+        </p>
+
+        <h3>Técnicas de mitigación</h3>
+        <ul>
+          <li><strong>Extrapolación a ruido cero (ZNE):</strong> ejecutar el circuito a distintos niveles de ruido artificial y extrapolar al límite \( \epsilon \to 0 \).</li>
+          <li><strong>Cancelación probabilística de errores (PEC):</strong> descomponer la operación deseada en combinaciones lineales de operaciones implementables.</li>
+          <li><strong>Mitigación de errores de lectura:</strong> corregir la matriz de confusión de la medición mediante calibración.</li>
+          <li><strong>Verificación de simetrías:</strong> filtrar cadenas de bits que violan simetrías conocidas del problema.</li>
+        </ul>
+
+        <h3>Compromiso profundidad / fidelidad</h3>
+        <p>
+          Puede existir un \( p \) óptimo que maximiza la calidad de la solución
+          teniendo en cuenta el ruido. Más allá de ese punto, aumentar \( p \)
+          puede degradar el resultado.
+        </p>
+      </section>
+
+      <section>
+        <h2 id="extensiones">4. Extensiones emergentes</h2>
+        <ul>
+          <li><strong>Control cuántico óptimo:</strong> uso de técnicas de control para sintetizar unitarias que aproximan \( U_C \) y \( U_B \) con menos compuertas.</li>
+          <li><strong>QAOA con qudits:</strong> generalización a sistemas de \( d \) niveles.</li>
+          <li><strong>QAOA y aprendizaje automático:</strong> aprendizaje de políticas de inicialización o de compilación.</li>
+          <li><strong>QAOA para restricciones duras:</strong> oráculos eficientes y mezcladores específicos.</li>
+          <li><strong>Evaluaciones unificadas:</strong> esfuerzos por definir protocolos reproducibles de comparación.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 id="abiertos">5. Problemas abiertos y controversias</h2>
+        <ul>
+          <li>¿Existe realmente una concentración de parámetros robusta y explotable?</li>
+          <li>¿Puede QAOA superficial mostrar ventaja cuántica antes de la era tolerante a fallos?</li>
+          <li>¿Cómo separar el efecto del ruido del efecto de la limitada expresividad del ansatz?</li>
+          <li>¿Qué familias de problemas son intrínsecamente favorables a QAOA?</li>
+          <li>¿Qué métricas son justas para comparar QAOA con heurísticas clásicas?</li>
+        </ul>
+      </section>
+
+    </article>
+  </main>
+  <aside class="toc" aria-label="Tabla de contenidos"></aside>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p>QAOA Referencia técnica · Investigación</p>
+      <p class="muted">Marco Mayta · QAOA · <a href="https://github.com/Maqui2404" rel="noopener noreferrer">GitHub</a> <a href="https://www.linkedin.com/in/marco-mayta-835781170/" rel="noopener noreferrer">LinkedIn</a> </p>
+  </div>
+</footer>
+
+<button class="back-to-top" aria-label="Volver arriba">↑</button>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js" crossorigin="anonymous"></script>
+<script src="./assets/js/katex-init.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-julia.min.js"></script>
+<script src="./assets/js/main.js"></script>
+<script src="./assets/js/interactivos.js"></script>
+<script src="./ejemplos/qaoa_javascript.js"></script>
+<script src="./assets/js/laboratorio.js"></script>
+</body>
+</html>

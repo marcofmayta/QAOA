@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QAOA en práctica: de las ecuaciones al código | Marco Mayta</title>
+<meta name="description" content="Aprende QAOA con Marco Mayta: fundamentos, un ejemplo ejecutable en Python y herramientas interactivas. Explora su GitHub y síguelo en LinkedIn.">
+<meta name="author" content="Marco Mayta">
+<meta property="og:title" content="QAOA en práctica · Marco Mayta">
+<meta property="og:description" content="De las ecuaciones al código: aprende QAOA, ejecuta un ejemplo en Python y explora el paisaje de optimización con Marco Mayta.">
+<meta property="og:locale" content="es_ES">
+<meta property="og:site_name" content="QAOA en práctica · Marco Mayta">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="./assets/css/style.css">
+<link rel="stylesheet" href="./assets/css/laboratorio.css">
+<link rel="icon" href="./assets/img/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://marcofmayta.github.io/QAOA/">
+<meta property="og:url" content="https://marcofmayta.github.io/QAOA/">
+<meta property="og:image" content="https://marcofmayta.github.io/QAOA/assets/img/marco-mayta.jpg">
+<meta property="og:image:alt" content="Marco Fidel Mayta Quispe, autor de QAOA en practica">
+</head>
+<body>
+<div class="reading-progress" aria-hidden="true"></div>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="./index.html" class="logo">
+      <span class="logo-mark">QAOA</span>
+      <span class="logo-sub">Marco Mayta</span>
+    </a>
+    <button class="menu-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+    <nav class="main-nav" aria-label="Navegación principal">
+      <a href="./index.html" class="active" aria-current="page">Inicio</a>
+      <a href="./fundamentos.html">Fundamentos</a>
+      <a href="./implementacion.html">Implementación</a>
+      <a href="./ejercicios.html">Ejercicios</a>
+      <a href="./investigacion.html">Investigación</a>
+      <a href="./recursos.html">Recursos</a>
+      <a href="./sobre-mi.html">Sobre mí</a>
+    </nav>
+    <button class="motion-toggle" aria-pressed="false">Pausar animación</button>
+    <button class="theme-toggle" aria-label="Cambiar tema" title="Modo claro / oscuro">🌙</button>
+  </div>
+</header>
+
+<div class="layout">
+  <main class="content" id="contenido">
+    <article>
+
+      <section class="hero"><span class="hero-number">CUADERNO / 001</span>
+        <p class="eyebrow">UNA GUÍA DE MARCO MAYTA</p>
+        <h1>QAOA en práctica.<br><span>De las ecuaciones<br>al código.</span></h1>
+        <p class="hero-subtitle">Comprende el algoritmo. Ejecuta el circuito. Evalúa el resultado.</p>
+        <p class="lede">
+          Explora cómo un algoritmo cuántico busca soluciones a problemas de
+          optimización. Esta guía conecta los fundamentos de QAOA con un ejemplo
+          ejecutable en Python y herramientas para experimentar por tu cuenta.
+        </p>
+        <div class="circuit-strip" aria-hidden="true">
+<div class="wire"><span class="wire-label">q₀</span><span class="gate">H</span><span class="gate gate-accent">U꜀(γ)</span><span class="gate">RX(2β)</span><span class="gate">M</span></div>
+<div class="wire"><span class="wire-label">q₁</span><span class="gate">H</span><span class="gate gate-accent">U꜀(γ)</span><span class="gate">RX(2β)</span><span class="gate">M</span></div>
+<div class="wire"><span class="wire-label">q₂</span><span class="gate">H</span><span class="gate gate-accent">U꜀(γ)</span><span class="gate">RX(2β)</span><span class="gate">M</span></div>
+</div><p class="circuit-caption">Preparación → costo → mezcla → medición · esquema ilustrativo</p>
+<p class="hero-meta">
+          Fundamentos · Código Python · Visualizador interactivo
+        </p>
+        <div class="hero-actions">
+          <a class="button-primary" href="./implementacion.html#frameworks">Probar QAOA en Python →</a>
+          <a class="button-secondary" href="https://www.linkedin.com/in/marco-mayta-835781170/" rel="noopener noreferrer">Seguir a Marco en LinkedIn ↗</a>
+        </div>
+        <a class="hero-profile" href="https://github.com/Maqui2404" rel="noopener noreferrer">Explora mis proyectos en GitHub ↗</a>
+      </section>
+
+      <section class="circuit-lab">
+<p class="eyebrow">LABORATORIO 01 / MAXCUT</p>
+<h2 id="laboratorio">Cambia un bit. Observa el corte.</h2>
+<p>Coloca los vértices en dos grupos. Una arista cuenta cuando conecta bits distintos.
+¿Puedes cortar las cuatro aristas del ciclo?</p>
+<div class="graph-board">
+<svg class="cut-graph" viewBox="0 0 240 240" role="img" aria-label="Ciclo de cuatro vértices: 0, 1, 2 y 3. Las aristas resaltadas conectan grupos distintos.">
+<line data-edge="0" x1="45" y1="45" x2="195" y2="45"></line>
+<line data-edge="1" x1="195" y1="45" x2="195" y2="195"></line>
+<line data-edge="2" x1="195" y1="195" x2="45" y2="195"></line>
+<line data-edge="3" x1="45" y1="195" x2="45" y2="45"></line>
+<circle cx="45" cy="45" r="28"></circle><text id="graph-label-0" x="45" y="45">0 · 0</text>
+<circle cx="195" cy="45" r="28"></circle><text id="graph-label-1" x="195" y="45">1 · 0</text>
+<circle cx="195" cy="195" r="28"></circle><text id="graph-label-2" x="195" y="195">2 · 0</text>
+<circle cx="45" cy="195" r="28"></circle><text id="graph-label-3" x="45" y="195">3 · 0</text>
+</svg><div><div class="cut-controls">
+<button data-qubit="0" aria-pressed="false">Qubit 0: 0</button>
+<button data-qubit="1" aria-pressed="false">Qubit 1: 0</button>
+<button data-qubit="2" aria-pressed="false">Qubit 2: 0</button>
+<button data-qubit="3" aria-pressed="false">Qubit 3: 0</button>
+</div><p id="cut-score" class="cut-score" aria-live="polite">Corte: 0 / 4 · bits: 0000</p>
+<p class="lab-note">Demostración clásica de la función objetivo. Los botones cambian una partición;
+no ejecutan un circuito cuántico. Los bits se muestran como q₃q₂q₁q₀.</p></div></div>
+<a class="text-action" href="./ejercicios.html">Continúa con los ejercicios →</a>
+</section>
+<section class="learning-route">
+        <p class="eyebrow">EMPIEZA CON UN PROBLEMA CONCRETO</p>
+        <h2 id="primer-experimento">Cuatro qubits. Un primer experimento.</h2>
+        <p>MaxCut busca dividir un grafo en dos grupos para cortar tantas aristas
+          como sea posible. El ejemplo de esta guía usa un ciclo de cuatro vértices:
+          puedes leer el código, ejecutarlo y contrastar el resultado con el óptimo clásico.</p>
+        <div class="experiment-results">
+          <div><strong>4</strong><span>qubits simulados</span></div>
+          <div><strong>1</strong><span>capa de QAOA</span></div>
+          <div><strong>≈ 3 / 4</strong><span>corte esperado / óptimo clásico</span></div>
+        </div>
+        <p class="small muted">Resultado del ejemplo con simulación ideal. La mejor muestra puede alcanzar
+          un corte de 4; el promedio y la mejor muestra son métricas diferentes.</p>
+        <a class="text-action" href="./ejemplos/qaoa_python.py" download>Descargar el ejemplo Python →</a>
+      </section>
+
+      <section>
+        <h2 id="que-es-qaoa">¿Qué es QAOA?</h2>
+        <p>
+          El <strong>algoritmo cuántico de optimización aproximada</strong> (QAOA),
+          propuesto por Farhi, Goldstone y Gutmann en 2014, es un algoritmo
+          variacional híbrido para buscar soluciones a problemas de optimización
+          combinatoria. Puede ejecutarse con circuitos de poca profundidad;
+          su rendimiento depende del problema, los parámetros y el ruido.
+        </p>
+        <p>
+          Se construye a partir de un ansatz con estructura alternante
+          \( U_B(\beta_p)U_C(\gamma_p)\cdots U_B(\beta_1)U_C(\gamma_1)|s\rangle \),
+          donde \( U_C \) codifica el Hamiltoniano de costo del problema y
+          \( U_B \) es un operador de mezcla. En el ansatz estándar, los \( 2p \) parámetros variacionales
+          se optimizan en un bucle clásico. Se minimiza la energía para un costo de
+          minimización, o se maximiza el valor esperado para un objetivo como MaxCut:
+          \( \langle \psi(\vec\gamma,\vec\beta) | H_C | \psi(\vec\gamma,\vec\beta)\rangle \).
+        </p>
+      </section>
+
+      <section>
+        <h2 id="secciones">Elige tu siguiente paso</h2>
+        <div class="cards-grid">
+
+          <a class="card" href="./fundamentos.html">
+            <h3>Entiende las ecuaciones</h3>
+            <p>Codificación QUBO/Ising, estructura del ansatz, garantías de rendimiento y paisaje de energía.</p>
+          </a>
+
+          <a class="card" href="./implementacion.html">
+            <h3>Llévalo al código</h3>
+            <p>Optimización de parámetros, compilación de circuitos, manejo de restricciones y bibliotecas.</p>
+          </a>
+
+          <a class="card" href="./investigacion.html">
+            <h3>Evalúa la evidencia</h3>
+            <p>Diseño de ansatz, evaluaciones comparativas de ventaja cuántica, ruido y mitigación de errores.</p>
+          </a>
+
+          <a class="card" href="./recursos.html">
+            <h3>Profundiza con las fuentes</h3>
+            <p>Repositorios, conjuntos de datos, artículos clave, cuadernos de programación y herramientas de comparación de rendimiento.</p>
+          </a>
+
+        </div>
+      </section>
+
+      <section>
+        <h2 id="prerrequisitos">Prerrequisitos recomendados</h2>
+        <ul>
+          <li><strong>Mecánica cuántica:</strong> notación de Dirac, operadores, Hamiltonianos, evolución temporal \( e^{-iHt} \).</li>
+          <li><strong>Álgebra lineal:</strong> espacios de Hilbert, matrices de Pauli, productos tensoriales, descomposición espectral.</li>
+          <li><strong>Optimización:</strong> formulación combinatoria, QUBO, relajaciones, heurísticas clásicas.</li>
+          <li><strong>Computación cuántica:</strong> circuitos, compuertas de 1 y 2 qubits, mediciones, modelos de ruido.</li>
+          <li><strong>Programación:</strong> Python básico, idealmente Qiskit o PennyLane.</li>
+        </ul>
+      </section>
+
+      <section class="author-card">
+        <img class="author-photo" src="./assets/img/marco-mayta.jpg" alt="Marco Mayta" width="800" height="800" loading="lazy" decoding="async">
+        <div><p class="eyebrow">SIGAMOS EN CONTACTO</p><h2 id="autor">Soy Marco Mayta.</h2>
+        <p><a href="./sobre-mi.html">Conoce mi trayectoria en investigación y QWorld →</a></p>
+        <p>Preparé esta guía para conectar las ecuaciones con el código y hacer
+          más fácil la exploración de QAOA. Si este recurso te resultó útil,
+          sígueme en LinkedIn o explora mis proyectos en GitHub.</p>
+        <nav class="social-links" aria-label="Perfiles de Marco Mayta">
+          <a class="button-primary" href="https://www.linkedin.com/in/marco-mayta-835781170/" rel="noopener noreferrer">Sígueme en LinkedIn ↗</a>
+          <a class="button-secondary" href="https://github.com/Maqui2404" rel="noopener noreferrer">Explora mi GitHub ↗</a>
+          <a href="https://maqui2404.github.io/PortafolioMarco.github.io/" rel="noopener noreferrer">Conoce mi portafolio ↗</a>
+        </nav></div>
+      </section>
+
+    </article>
+  </main>
+  <aside class="toc" aria-label="Tabla de contenidos"></aside>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p>QAOA Referencia técnica · Contenido con fines educativos.</p>
+      <p class="muted">Marco Mayta · QAOA · <a href="https://github.com/Maqui2404" rel="noopener noreferrer">GitHub</a> <a href="https://www.linkedin.com/in/marco-mayta-835781170/" rel="noopener noreferrer">LinkedIn</a> </p>
+  </div>
+</footer>
+
+<button class="back-to-top" aria-label="Volver arriba">↑</button>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js" crossorigin="anonymous"></script>
+<script src="./assets/js/katex-init.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-julia.min.js"></script>
+<script src="./assets/js/main.js"></script>
+<script src="./ejemplos/qaoa_javascript.js"></script>
+<script src="./assets/js/laboratorio.js"></script>
+</body>
+</html>

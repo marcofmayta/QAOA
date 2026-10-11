@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recursos | QAOA en práctica · Marco Mayta</title>
+<meta name="description" content="Repositorios, conjuntos de datos, artículos clave, tutoriales y herramientas de comparación de rendimiento para QAOA.">
+<meta property="og:title" content="Recursos sobre QAOA">
+<meta property="og:description" content="Repositorios, conjuntos de datos, artículos y herramientas.">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="./assets/css/style.css">
+<link rel="stylesheet" href="./assets/css/laboratorio.css">
+<link rel="icon" href="./assets/img/favicon.svg" type="image/svg+xml">
+<meta name="author" content="Marco Fidel Mayta Quispe">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://marcofmayta.github.io/QAOA/recursos.html">
+<meta property="og:url" content="https://marcofmayta.github.io/QAOA/recursos.html">
+<meta property="og:image" content="https://marcofmayta.github.io/QAOA/assets/img/marco-mayta.jpg">
+<meta property="og:image:alt" content="Marco Fidel Mayta Quispe, autor de QAOA en practica">
+</head>
+<body>
+<div class="reading-progress" aria-hidden="true"></div>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="./index.html" class="logo">
+      <span class="logo-mark">QAOA</span>
+      <span class="logo-sub">Marco Mayta</span>
+    </a>
+    <button class="menu-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+    <nav class="main-nav" aria-label="Navegación principal">
+      <a href="./index.html">Inicio</a>
+      <a href="./fundamentos.html">Fundamentos</a>
+      <a href="./implementacion.html">Implementación</a>
+      <a href="./ejercicios.html">Ejercicios</a>
+      <a href="./investigacion.html">Investigación</a>
+      <a href="./recursos.html" class="active" aria-current="page">Recursos</a>
+      <a href="./sobre-mi.html">Sobre mí</a>
+    </nav>
+    <button class="motion-toggle" aria-pressed="false">Pausar animación</button>
+    <button class="theme-toggle" aria-label="Cambiar tema">🌙</button>
+  </div>
+</header>
+
+<div class="layout">
+  <main class="content" id="contenido">
+    <article>
+
+      <h1>Recursos</h1>
+      <p class="lede">
+        Enlaces a repositorios, conjuntos de datos, artículos y herramientas
+        útiles para trabajar con QAOA a nivel de investigación.
+      </p>
+
+      <section>
+        <h2 id="repos">Repositorios</h2>
+        <ul>
+          <li><a href="https://github.com/entropicalabs/openqaoa" rel="noopener">OpenQAOA</a> — API de alto nivel sobre múltiples entornos de ejecución (Qiskit, Braket, Rigetti).</li>
+          <li><a href="https://github.com/PennyLaneAI/pennylane" rel="noopener">PennyLane</a> — biblioteca de programación cuántica diferenciable con módulo QAOA.</li>
+          <li><a href="https://github.com/Qiskit/qiskit" rel="noopener">Qiskit</a> — SDK de IBM con primitivas y tutoriales de QAOA.</li>
+          <li><a href="https://github.com/quantumlib/Cirq" rel="noopener">Cirq</a> — biblioteca de Google con ejemplos de QAOA.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 id="datos">Conjuntos de datos y evaluaciones comparativas</h2>
+        <ul>
+          <li><a href="https://github.com/MQLib/MQLib" rel="noopener">MQLib</a> — biblioteca de heurísticas para MaxCut y QUBO con instancias estándar.</li>
+          <li>Para generar grafos 3-regulares o Erdős–Rényi, registrar el generador, el tamaño y la semilla. La biblioteca MQLib contiene instancias para comparación clásica.</li>
+          <li>Evaluaciones de QUBO: conjuntos de problemas en <a href="https://biqmac.aau.at/biqmaclib.html" rel="noopener">Biq Mac Library</a>.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 id="articulos">Artículos clave</h2>
+        <ul>
+          <li>Farhi, Goldstone, Gutmann (2014). <em>Un algoritmo cuántico de optimización aproximada</em> (título traducido). <a href="https://arxiv.org/abs/1411.4028" rel="noopener">arXiv:1411.4028</a>.</li>
+          <li>Hadfield et al. (2019). <em>Del algoritmo cuántico de optimización aproximada a un ansatz de operadores alternantes</em> (título traducido). <a href="https://arxiv.org/abs/1709.03489" rel="noopener">arXiv:1709.03489</a>.</li>
+          <li>Guerreschi, Matsuura (2019). <em>QAOA para MaxCut requiere cientos de qubits para lograr aceleración cuántica</em> (título traducido). <a href="https://arxiv.org/abs/1812.07589" rel="noopener">arXiv:1812.07589</a>.</li>
+          <li>Bravyi et al. (2020). <em>Obstáculos para la optimización cuántica variacional por protección de simetría</em> (título traducido). <a href="https://arxiv.org/abs/1910.08980">arXiv:1910.08980</a>.</li>
+          <li>Barkoutsos et al. (2020). <em>Mejora de la optimización cuántica variacional mediante CVaR</em> (título traducido). <a href="https://arxiv.org/abs/1907.04769" rel="noopener">arXiv:1907.04769</a>.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 id="tutoriales">Tutoriales y cuadernos de programación</h2>
+        <ul>
+          <li><a href="https://qiskit-community.github.io/qiskit-optimization/" rel="noopener">Qiskit Optimization</a> — módulo oficial con tutoriales.</li>
+          <li><a href="https://pennylane.ai/demos/tutorial_qaoa_maxcut" rel="noopener">Ejemplo de QAOA con PennyLane</a>.</li>
+          <li><a href="https://quantumai.google/cirq/tutorials" rel="noopener">Tutoriales de Cirq</a>.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 id="comparacion-clasica">Herramientas de comparación de rendimiento clásico</h2>
+        <ul>
+          <li><strong>Gurobi</strong> — solucionador comercial de optimización entera mixta.</li>
+          <li><strong>CPLEX</strong> — solucionador de IBM para programación entera mixta.</li>
+          <li><strong>OR-Tools</strong> — suite de Google con solucionadores de rutas y asignación.</li>
+          <li><strong>MQLib</strong> — heurísticas específicas para MaxCut/QUBO.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 id="comunidad">Comunidad y seguimiento</h2>
+        <ul>
+          <li><a href="https://arxiv.org/list/quant-ph/recent" rel="noopener">arXiv quant-ph</a> — listado reciente.</li>
+          <li><a href="https://quantumcomputing.stackexchange.com/" rel="noopener">Quantum Computing Stack Exchange</a>.</li>
+          <li><a href="https://www.ibm.com/quantum/events" rel="noopener">Eventos de Qiskit</a> y seminarios.</li>
+        </ul>
+      </section>
+
+    </article>
+  </main>
+  <aside class="toc" aria-label="Tabla de contenidos"></aside>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p>QAOA Referencia técnica · Recursos</p>
+      <p class="muted">Marco Mayta · QAOA · <a href="https://github.com/Maqui2404" rel="noopener noreferrer">GitHub</a> <a href="https://www.linkedin.com/in/marco-mayta-835781170/" rel="noopener noreferrer">LinkedIn</a> </p>
+  </div>
+</footer>
+
+<button class="back-to-top" aria-label="Volver arriba">↑</button>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js" crossorigin="anonymous"></script>
+<script src="./assets/js/katex-init.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-julia.min.js"></script>
+<script src="./assets/js/main.js"></script>
+<script src="./ejemplos/qaoa_javascript.js"></script>
+<script src="./assets/js/laboratorio.js"></script>
+</body>
+</html>

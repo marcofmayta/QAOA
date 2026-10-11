@@ -1,0 +1,35 @@
+name: Publicar QAOA en GitHub Pages
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Configurar Pages
+        id: pages
+        uses: actions/configure-pages@v5
+      - name: Preparar sitio
+        run: |
+          mkdir public
+          cp *.html sitemap.xml robots.txt public/
+          cp -R assets ejemplos public/
+          touch public/.nojekyll
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: public
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4

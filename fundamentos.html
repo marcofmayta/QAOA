@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fundamentos | QAOA en práctica · Marco Mayta</title>
+<meta name="description" content="Fundamentos matemáticos de QAOA: formulación QUBO/Ising, ansatz, garantías de rendimiento y paisaje de energía.">
+<meta property="og:title" content="Fundamentos de QAOA">
+<meta property="og:description" content="Formulación QUBO/Ising, ansatz, garantías y paisaje de energía.">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="./assets/css/style.css">
+<link rel="stylesheet" href="./assets/css/laboratorio.css">
+<link rel="icon" href="./assets/img/favicon.svg" type="image/svg+xml">
+<meta name="author" content="Marco Fidel Mayta Quispe">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://marcofmayta.github.io/QAOA/fundamentos.html">
+<meta property="og:url" content="https://marcofmayta.github.io/QAOA/fundamentos.html">
+<meta property="og:image" content="https://marcofmayta.github.io/QAOA/assets/img/marco-mayta.jpg">
+<meta property="og:image:alt" content="Marco Fidel Mayta Quispe, autor de QAOA en practica">
+</head>
+<body>
+<div class="reading-progress" aria-hidden="true"></div>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="./index.html" class="logo">
+      <span class="logo-mark">QAOA</span>
+      <span class="logo-sub">Marco Mayta</span>
+    </a>
+    <button class="menu-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+    <nav class="main-nav" aria-label="Navegación principal">
+      <a href="./index.html">Inicio</a>
+      <a href="./fundamentos.html" class="active" aria-current="page">Fundamentos</a>
+      <a href="./implementacion.html">Implementación</a>
+      <a href="./ejercicios.html">Ejercicios</a>
+      <a href="./investigacion.html">Investigación</a>
+      <a href="./recursos.html">Recursos</a>
+      <a href="./sobre-mi.html">Sobre mí</a>
+    </nav>
+    <button class="motion-toggle" aria-pressed="false">Pausar animación</button>
+    <button class="theme-toggle" aria-label="Cambiar tema">🌙</button>
+  </div>
+</header>
+
+<div class="layout">
+  <main class="content" id="contenido">
+    <article>
+
+      <h1>Fundamentos teóricos</h1>
+      <p class="lede">
+        Formulación matemática del algoritmo, sus garantías y la
+        estructura del paisaje de energía que condiciona su rendimiento.
+      </p>
+
+      <section>
+        <h2 id="qubo-ising">1. De la optimización combinatoria al Hamiltoniano</h2>
+        <p>
+          Para aplicar QAOA se codifica la función objetivo en un Hamiltoniano
+          diagonal. Una codificación frecuente sobre variables binarias es la
+          <em>formulación QUBO</em> (optimización binaria cuadrática sin restricciones):
+        </p>
+        $$ \min_{x \in \{0,1\}^n} \; x^T Q x + c^T x $$
+        <p>
+          Mediante el cambio \( x_i = (1 - z_i)/2 \) con \( z_i \in \{-1,+1\} \),
+          se obtiene el <strong>modelo de Ising</strong>:
+        </p>
+        $$ H_C = \sum_{i&lt;j} J_{ij}\, \sigma_z^i \sigma_z^j + \sum_i h_i\, \sigma_z^i $$
+        <p>
+          Se ha omitido una constante aditiva. Los autovalores de \( H_C \)
+          coinciden con los costos originales salvo esa constante, que no cambia
+          las soluciones óptimas.
+        </p>
+
+        <h3>Coeficientes y constante: una convención explícita</h3>
+        <p>Escribe \(C(x)=\sum_i a_i x_i+\sum_{i&lt;j}b_{ij}x_ix_j\), con
+          \(a_i=Q_{ii}+c_i\) y \(b_{ij}=Q_{ij}+Q_{ji}\). Así se evita contar
+          dos veces los términos fuera de la diagonal:</p>
+        $$ J_{ij}=\frac{b_{ij}}4,\qquad h_i=-\frac{a_i}2-\frac14\sum_{j\ne i}b_{\min(i,j),\max(i,j)} $$
+        $$ K=\frac12\sum_i a_i+\frac14\sum_{i&lt;j}b_{ij},\qquad H_C=K I+\sum_i h_iZ_i+\sum_{i&lt;j}J_{ij}Z_iZ_j $$
+        <p>Con la constante \(K\), los valores propios reproducen exactamente \(C(x)\).
+          Omitirla solo elimina una fase global en \(U_C\). Si \(Q\) se guarda
+          triangular, usa sus coeficientes de cada pareja una sola vez.</p>
+        <h3>Ejemplo: MaxCut</h3>
+        <p>
+          Dado un grafo \( G=(V,E) \), MaxCut busca una partición de \( V \) que
+          maximice el número de aristas cortadas. La forma estándar del
+          Hamiltoniano de costo es:
+        </p>
+        $$ H_C = \sum_{(i,j)\in E} \tfrac{1}{2}\bigl(I - \sigma_z^i \sigma_z^j\bigr) $$
+        <p>
+          Su mínimo (cero) corresponde a particiones donde ninguna arista se
+          corta, y su máximo es el tamaño del corte óptimo, que solo alcanza \( |E| \)
+          si el grafo es bipartito. Para usar un optimizador de minimización,
+          se minimiza \( -\langle H_C\rangle \). Cambiar el signo de
+          \( \gamma \) cambia la evolución, pero no el objetivo del optimizador.
+        </p>
+
+        <h3>Otras codificaciones</h3>
+        <ul>
+          <li><strong>Conjunto independiente máximo:</strong> minimizar \( -\sum_i x_i + \lambda \sum_{(i,j)\in E} x_i x_j \), con \( \lambda>1 \) en el caso no ponderado; después se sustituye \( x_i=(I-Z_i)/2 \).</li>
+          <li><strong>TSP / VRP:</strong> variables \( x_{i,t} \) con restricciones de visita y arco codificadas como términos cuadráticos y de orden superior.</li>
+          <li><strong>Optimización de carteras:</strong> término cuadrático de riesgo \( \sum_{ij} \Sigma_{ij} x_i x_j \) y término lineal de retorno esperado.</li>
+        </ul>
+
+        <h3>Manejo de restricciones</h3>
+        <p>Algunas estrategias para incorporar restricciones:</p>
+        <ol>
+          <li><strong>Penalización:</strong> para una igualdad \(g(x)=0\), sumar \(\lambda g(x)^2\). Elegir una penalización suficiente para el problema; un valor arbitrariamente grande puede dificultar el ajuste. Riesgo: paisajes muy rígidos y sensibilidad al parámetro.</li>
+          <li><strong>Mezcladores que preservan factibilidad:</strong> diseñar \( U_B \) para que permanezca dentro del subespacio factible (ansatz cuántico de operadores alternantes).</li>
+          <li><strong>Oráculos y variables de holgura:</strong> introducir qubits auxiliares que codifican violaciones de restricciones (según la codificación).</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2 id="ansatz">2. Estructura matemática del ansatz</h2>
+        <p>
+          QAOA prepara el estado inicial
+        </p>
+        $$ |s\rangle = |+\rangle^{\otimes n} = \frac{1}{\sqrt{2^n}} \sum_{x \in \{0,1\}^n} |x\rangle $$
+        <p>
+          y aplica \( p \) capas alternantes de dos operadores unitarios:
+        </p>
+        $$ |\vec\gamma,\vec\beta\rangle = U_B(\beta_p) U_C(\gamma_p) \cdots U_B(\beta_1) U_C(\gamma_1) |s\rangle $$
+
+        <h3>Operadores</h3>
+        <p>El operador de costo y el de mezcla son, respectivamente:</p>
+        $$ U_C(\gamma) = e^{-i\gamma H_C}, \qquad U_B(\beta) = e^{-i\beta H_B} $$
+        <p>
+          La elección estándar del Hamiltoniano de mezcla es
+          \( H_B = \sum_i X_i \), cuya unitaria factoriza como producto de
+          rotaciones de un solo qubit \( \prod_i e^{-i\beta X_i} \).
+        </p>
+
+        <h3>Variantes del operador de mezcla</h3>
+        <ul>
+          <li><strong>X estándar:</strong> \( H_B = \sum_i X_i \). No preserva, en general, el subespacio factible de un problema restringido.</li>
+          <li><strong>XY en anillo / XY completo:</strong> \( H_B = \sum_{(i,j)\in E_B} (X_i X_j + Y_i Y_j) \). Preserva el número de excitaciones. Aquí \(E_B\) contiene pares distintos contados una sola vez. Los términos que comparten qubits pueden no conmutar; una secuencia de puertas XY no equivale automáticamente a la exponencial de la suma.</li>
+          <li><strong>Mezcladores específicos del problema:</strong> generadores diseñados para respetar la estructura combinatoria del problema (p. ej., intercambios que preservan el conjunto factible).</li>
+        </ul>
+
+        <h3>Dimensión del espacio de parámetros</h3>
+        <p>
+          El ansatz estándar tiene \( 2p \) parámetros reales. Para MaxCut
+          no ponderado, basta explorar \( \gamma \in [0,2\pi) \) y
+          \( \beta \in [0,\pi) \). La periodicidad de \( \gamma \)
+          depende del espectro del Hamiltoniano; estos intervalos no son universales.
+        </p>
+      </section>
+
+      <section>
+        <h2 id="garantias">3. Garantías de rendimiento y límites</h2>
+
+        <h3>Garantía original de Farhi-Goldstone-Gutmann</h3>
+        <p>
+          Para MaxCut no ponderado en grafos simples 3-regulares, con \( p=1 \), simulación ideal y parámetros adecuados, se demostró que existe
+          una elección de \( (\gamma,\beta) \) tal que la razón de aproximación
+          satisface
+        </p>
+        $$ \frac{\langle H_C \rangle}{C_{\max}} \geq 0.6924 $$
+        <p>
+          Esta es una garantía para una familia concreta de grafos y profundidad.
+          No es un resultado experimental ni una garantía para todos los problemas.
+          Véase el <a href="https://arxiv.org/abs/1411.4028">artículo original</a>.
+        </p>
+
+        <h3>Concentración de parámetros</h3>
+        <p>
+          Empíricamente se observa que, para instancias aleatorias del mismo
+          tamaño y distribución, los parámetros óptimos \( (\vec\gamma^*,\vec\beta^*) \)
+          pueden mostrar concentración en determinadas familias. No es una propiedad universal. Esto motiva estrategias de <em>transferencia</em>:
+          entrenar en instancias pequeñas y reutilizar los parámetros en
+          instancias más grandes o en hardware real, reduciendo el esfuerzo de ajuste, con validación en la nueva instancia.
+          <a href="https://arxiv.org/abs/1812.01041">Zhou et al., estrategias de inicialización</a>.
+        </p>
+
+        <h3>Umbral de ventaja cuántica</h3>
+        <p>
+          Guerreschi y Matsuura estudiaron un umbral de aceleración bajo
+          hipótesis concretas de simulación y ejecución. Su estimación de cientos
+          de qubits no constituye un umbral universal ni una demostración de ventaja.
+          <a href="https://arxiv.org/abs/1812.07589">Detalles del modelo</a>.
+        </p>
+
+        <h3>Cuellos de botella prácticos</h3>
+        <ul>
+          <li>Profundidad del circuito crece con \( p \) y con la conectividad del problema.</li>
+          <li>El ruido puede impedir aprovechar capas adicionales.</li>
+          <li>El paisaje puede tener múltiples extremos locales; su estructura depende de la instancia y la profundidad.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 id="paisaje">4. Paisaje de energía y parametrización</h2>
+        <p>
+          La función objetivo del bucle clásico es
+        </p>
+        $$ E(\vec\gamma,\vec\beta) = \langle \vec\gamma,\vec\beta | H_C | \vec\gamma,\vec\beta \rangle $$
+        <p>
+          Comprender su estructura es esencial para elegir algoritmos de
+          optimización y estrategias de inicialización.
+        </p>
+
+        <h3>Periodicidad y simetrías</h3>
+        <ul>
+          <li>\( E(\gamma + 2\pi, \beta) = E(\gamma,\beta) \) si los autovalores de \( H_C \) son enteros.</li>
+          <li>\( E(\gamma, \beta + \pi) = E(\gamma,\beta) \) por periodicidad de las rotaciones \( R_X \), salvo una fase global.</li>
+          <li>Con Hamiltonianos reales y estado inicial real, invertir simultáneamente \( (\gamma,\beta)\to(-\gamma,-\beta) \) conserva el valor esperado. Invertir un solo ángulo no es una simetría general.</li>
+        </ul>
+
+        <h3>Mínimos locales y estrategias de inicialización</h3>
+        <p>
+          Aumentar \(p\) añade parámetros y puede dificultar el ajuste; no implica
+          que todas las instancias se vuelvan más difíciles de optimizar. Estrategias habituales:
+        </p>
+        <ul>
+          <li><strong>Inicio desde una solución clásica:</strong> preparar un estado y un mezclador compatibles con una solución relajada; no basta con cambiar los ángulos.</li>
+          <li><strong>Interpolación</strong> desde \( p-1 \) hacia \( p \).</li>
+          <li><strong>Secuencias de parámetros fijas</strong> (lineal, cosenoidal) que evitan el ajuste variacional y pueden limitar la calidad.</li>
+          <li><strong>Concentración de parámetros</strong> y transferencia entre instancias similares.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 id="visualizador">5. Visualizador interactivo del paisaje</h2>
+        <p>
+          El siguiente componente calcula numéricamente
+          \( E(\gamma,\beta) \) para MaxCut en un ciclo de 4 nodos, usando un
+          simulador vectorial de 4 qubits en JavaScript puro (sin bibliotecas
+          cuánticas). Aquí se maximiza el corte esperado: el marcador señala
+          el máximo, no el mínimo de la energía.
+        </p>
+
+        <div class="interactive" id="viz-paisaje">
+          <div class="controls">
+            <label for="viz-p">Profundidad p:</label>
+            <input type="range" id="viz-p" min="1" max="3" step="1" value="1">
+            <span id="viz-p-val">1</span>
+          </div>
+          <canvas id="viz-canvas" width="480" height="360" aria-label="Paisaje de energía E(gamma, beta)"></canvas>
+          <div class="legend">
+            <span class="legend-low">menor corte esperado</span>
+            <div class="legend-bar"></div>
+            <span class="legend-high">mayor corte esperado</span>
+          </div>
+          <p class="muted small">
+            Ejes: \( \gamma \in [0, 2\pi] \) (horizontal), \( \beta \in [0, \pi] \) (vertical).
+            Para \( p>1 \) se muestra una sección con parámetros compartidos sobre \( (\gamma_1,\beta_1) \) fijando
+            \( \gamma_i=\gamma_1 \), \( \beta_i=\beta_1 \) para \( i\geq 2 \).
+          </p>
+        </div>
+      </section>
+
+<section class="angle-lab"><p class="eyebrow">LABORATORIO 02 / ÁNGULOS</p>
+<h2 id="angulos-interactivos">Encuentra el máximo de una capa.</h2>
+<p>Para el ciclo de cuatro vértices, con el mezclador X y la convención de costo de esta guía:</p>
+$$ C(\gamma,\beta)=2+\sin(4\beta)\sin(2\gamma) $$
+<div class="angle-controls"><label for="angle-gamma">γ (rad)</label><input id="angle-gamma" type="range" min="0" max="6.28318530718" step="any" value="0.5"><output id="gamma-value" for="angle-gamma">0.500</output>
+<label for="angle-beta">β (rad)</label><input id="angle-beta" type="range" min="0" max="3.14159265359" step="any" value="0.3"><output id="beta-value" for="angle-beta">0.300</output></div>
+<div class="angle-meter" aria-hidden="true"><span></span></div><p id="angle-result" aria-live="polite">Corte esperado: 2.7843 / 4</p>
+<button id="angle-optimum" class="answer-check">Probar γ=π/4 y β=π/8</button>
+<p class="lab-note">Esta expresión es exacta para p=1 y este grafo sin pesos, con simulación ideal.
+Su máximo es 3; el corte óptimo de una partición clásica es 4. No describe otras instancias ni capas adicionales.</p></section>
+    </article>
+  </main>
+  <aside class="toc" aria-label="Tabla de contenidos"></aside>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p>QAOA Referencia técnica · Fundamentos</p>
+      <p class="muted">Marco Mayta · QAOA · <a href="https://github.com/Maqui2404" rel="noopener noreferrer">GitHub</a> <a href="https://www.linkedin.com/in/marco-mayta-835781170/" rel="noopener noreferrer">LinkedIn</a> </p>
+  </div>
+</footer>
+
+<button class="back-to-top" aria-label="Volver arriba">↑</button>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js" crossorigin="anonymous"></script>
+<script src="./assets/js/katex-init.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-julia.min.js"></script>
+<script src="./assets/js/main.js"></script>
+<script src="./assets/js/interactivos.js"></script>
+<script src="./ejemplos/qaoa_javascript.js"></script>
+<script src="./assets/js/laboratorio.js"></script>
+</body>
+</html>
